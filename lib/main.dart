@@ -4,13 +4,20 @@ void main() {
   runApp(const MainApp());
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
+
+  @override
+  State<MainApp> createState() => _MainAppState(); 
+}
+
+class _MainAppState extends State<MainApp> {
+  bool isDarkMode = false; // this should track current theme
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Cassie's Calculator", 
+      title: "Cassandra's Calculator",
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -18,19 +25,42 @@ class MainApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.blue[600],
+          backgroundColor: Color(0xFFE95C6C),
           foregroundColor: Colors.white,
           centerTitle: true,
           elevation: 4,
         ),
       ),
-      home: const CalculatorPage(),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue, 
+          brightness: Brightness.dark,
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey, 
+          foregroundColor: Colors.white, 
+          centerTitle: true, 
+          elevation: 4,
+        ),
+      ),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light, 
+      home: CalculatorPage(
+        toggleTheme: _toggleTheme,
+      ),
     );
+  }
+
+  void _toggleTheme() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
   }
 }
 
 class CalculatorPage extends StatefulWidget {
-  const CalculatorPage({super.key});
+  final VoidCallback toggleTheme; 
+
+  const CalculatorPage({super.key, required this.toggleTheme});
 
   @override
   State<CalculatorPage> createState() => _CalculatorPageState();
@@ -54,7 +84,13 @@ class _CalculatorPageState extends State<CalculatorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Cassie's Calculator")),
+      appBar: AppBar(title: const Text("Cassie's Calculator"), 
+      actions: [
+        IconButton(icon: const Icon(Icons.brightness_6),
+        onPressed: widget.toggleTheme,
+        tooltip: 'Toggle Light/Dark Mode',),
+      ], 
+      ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
