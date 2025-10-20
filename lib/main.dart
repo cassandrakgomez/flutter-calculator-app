@@ -16,29 +16,40 @@ class MainApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
           brightness: Brightness.light,
-          ),
-          appBarTheme: AppBarTheme(
-            backgroundColor: Colors.blue[600],
-            foregroundColor: Colors.white,
-            centerTitle: true,
-            elevation: 4,
-          ),
         ),
-        home: const CalculatorPage(),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.blue[600],
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          elevation: 4,
+        ),
+      ),
+      home: const CalculatorPage(),
     );
   }
 }
 
-class CalculatorPage extends StatelessWidget{
+class CalculatorPage extends StatefulWidget {
   const CalculatorPage({super.key});
 
-static const List<String> _buttons = [
-  'C', 'DEL', '÷', 'x',
+  @override
+  State<CalculatorPage> createState() => _CalculatorPageState();
+}
+
+class _CalculatorPageState extends State<CalculatorPage> {
+  static const List<String> _buttons = [
+    'C', 'DEL', '÷', 'x',
     '7', '8', '9', '-',
     '4', '5', '6', '+',
     '1', '2', '3', '=',
     '0', '.', 
-];
+  ];
+
+  String history = '';
+  String mainDisplay = '0';
+  String? firstOperand;
+  String? operator; 
+  bool shouldResetMain = false;
 
   @override
   Widget build(BuildContext context) {
@@ -49,43 +60,102 @@ static const List<String> _buttons = [
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // history text
             Align(
               alignment: Alignment.centerRight,
-              child: Text('History will appear here', style: TextStyle(color: Colors.grey, fontSize: 18),),
+              child: Text(history,
+                  style: TextStyle(color: Colors.grey, fontSize: 18)),
             ),
             const SizedBox(height: 8),
-
-            // main display
             Align(
               alignment: Alignment.centerRight, 
               child: Text(
-                '0',
-                style:TextStyle(fontSize: 48, fontWeight: FontWeight.bold,),),
+                mainDisplay,
+                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(height: 16),
-
-            // button grid
             Expanded(
               child: GridView.builder(
                 itemCount: _buttons.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, mainAxisSpacing: 10, crossAxisSpacing: 10,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
                 ),
                 itemBuilder: (context, index) {
                   final label = _buttons[index];
                   return ElevatedButton(
-                    onPressed: () {
-                      debugPrint('Pressed: $label');
-                    }, 
-                    child: Text(label, style: const TextStyle(fontSize: 24),
-                    ),
+                    onPressed: () => _onButtonPressed(label),  
+                    child: Text(label, style: const TextStyle(fontSize: 24)),
                   ); 
                 },
               ),
-            ),  
+            ),
           ],
         ),
       ),
     );
+  }
+
+  void _onButtonPressed(String label) {
+    setState(() {
+      if (label == 'C') {
+        mainDisplay = '0';
+        history = '';
+        firstOperand = null;
+        operator = null;
+      } else if (label == 'DEL') {
+        if (mainDisplay.length > 1) {
+          mainDisplay = mainDisplay.substring(0, mainDisplay.length - 1);
+        } else {
+          mainDisplay = '0';
+        }
+      } else if (['+', '-', 'x', '÷'].contains(label)) {
+        firstOperand = mainDisplay;
+        operator = label;
+        history = '$mainDisplay $label';
+        shouldResetMain = true;
+      } else if (label == '=') {
+        if (firstOperand != null && operator != null) {
+          double num1 = double.parse(firstOperand!);
+          double num2 = double.parse(mainDisplay);
+          double result;
+
+          switch (operator) {
+            case '+':
+              result = num1 + num2;
+              break;
+            case '-':
+              result = num1 - num2;
+              break;
+            case 'x':
+              result = num1 * num2;
+              break;
+            case '÷':
+              result = num1 / num2;
+              break;
+            default:
+              result = 0;
+          }
+
+          history = '$firstOperand $operator $mainDisplay =';
+          mainDisplay = result.toString();
+          firstOperand = null;
+          operator = null;
+        }
+      } else if (label == '.') {
+        if (!mainDisplay.contains('.')) {
+          mainDisplay += '.';
+        }
+      } else {
+        // Number button
+        if (mainDisplay == '0' || shouldResetMain) {
+          mainDisplay = label;
+          shouldResetMain = false;
+        } else {
+          mainDisplay += label;
+        }
+      }
+    });
   }
 }
